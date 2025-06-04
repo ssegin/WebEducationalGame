@@ -1,0 +1,61 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Important to prevent double scrollbars */
+    font-family: sans-serif;
+}
+
+#main-container {
+    height: calc(100vh - 20px); /* Adjust 20px if scrollbar height changes */
+    overflow-x: hidden; /* Hide native horizontal scrollbar, custom one is used */
+    /* overflow-y can be auto or scroll if timeline/map content is taller than main-container */
+    overflow-y: hidden; /* Assuming timeline/map manage their own internal scroll if needed or fit */
+    /* Added to allow main-container to actually scroll its content horizontally */
+    /* This was an oversight in the plan, content-wrapper scrolls, but main-container needs overflow-x: scroll internally for JS to work, then hidden by -webkit-scrollbar etc. */
+    /* However, the prompt explicitly says overflow-x: hidden. The JS will control scrollLeft of main-container directly. */
+}
+
+#content-wrapper {
+    display: flex;
+    width: 200%; /* Example: Content is twice the viewport width */
+    height: 100%; /* Fill the main-container height */
+    /* The actual scrolling happens by changing mainContainer.scrollLeft in JS */
+}
+
+#timeline {
+    width: 50%; /* Takes half of the content-wrapper's width */
+    height: 100%; /* Fill the height of content-wrapper */
+    background-color: #f0f0f0;
+    padding: 20px;
+    box-sizing: border-box;
+    /* Add overflow-y: auto; if timeline content can exceed height */
+}
+
+#map {
+    width: 50%; /* Takes the other half */
+    height: 100%; /* Fill the height of content-wrapper */
+    background-color: #e0e0e0;
+    padding: 20px;
+    box-sizing: border-box;
+    /* Add overflow-y: auto; if map content can exceed height */
+}
+
+#scrollbar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20px; /* Height of the scrollbar track */
+    background-color: #ccc;
+    z-index: 1000;
+}
+
+#scrollbar-thumb {
+    height: 100%; /* Thumb takes full height of the container */
+    background-color: #555;
+    border-radius: 3px; /* Slightly rounded corners */
+    position: absolute;
+    left: 0; /* Initial position */
+    /* Width will be set by JavaScript */
+}
