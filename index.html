@@ -7,35 +7,26 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="admin-nav">
+        <a href="admin.html">Go to Admin Page</a>
+    </div>
     <div id="main-container">
         <div id="content-wrapper">
-            <div id="timeline">
-                <h2>Timeline of Events</h2>
-                <ul>
-                    <li><strong>1000 AD:</strong> Event A - A significant happening occurred.</li>
-                    <li><strong>1100 AD:</strong> Event B - Another major development.</li>
-                    <li><strong>1200 AD:</strong> Event C - Things changed again.</li>
-                    <li><strong>1300 AD:</strong> Event D - A new era began.</li>
-                    <li><strong>1400 AD:</strong> Event E - Exploration and discovery.</li>
-                    <li><strong>1500 AD:</strong> Event F - Global shifts.</li>
-                    <li><strong>1600 AD:</strong> Event G - Scientific advancements.</li>
-                    <li><strong>1700 AD:</strong> Event H - Revolutions and new ideas.</li>
-                    <li><strong>1800 AD:</strong> Event I - Industrial growth.</li>
-                    <li><strong>1900 AD:</strong> Event J - Modern world emerges.</li>
-                    <li><strong>2000 AD:</strong> Event K - The new millennium.</li>
-                </ul>
-                <p>Scroll to see more events if the timeline were longer vertically.</p>
-            </div>
-            <div id="map">
+            <!-- #timeline div is removed -->
+            <div id="map"> <!-- This will now implicitly take full width of content-wrapper -->
                 <h2>World Map (Conceptual)</h2>
-                <div id="current-time-display" style="font-size: 2em; text-align: center; padding: 20px;">Time: 1000 AD</div>
-                <!-- The placeholder regions can remain for visual context, but their collective width is no longer the focus -->
-                <div style="display: flex;"> <!-- Removed width: 1500px -->
-                    <div style="flex: 1; height: 200px; background-color: lightblue; border: 1px solid blue; display: flex; align-items: center; justify-content: center;">Region 1</div>
-                    <div style="flex: 1; height: 200px; background-color: lightgreen; border: 1px solid green; display: flex; align-items: center; justify-content: center;">Region 2</div>
-                    <div style="flex: 1; height: 200px; background-color: lightcoral; border: 1px solid red; display: flex; align-items: center; justify-content: center;">Region 3</div>
+                <div id="current-time-display">Time: 1000 AD</div>
+                <div id="event-display">
+                    <!-- Event descriptions will appear here -->
+                    <p>Event details for the selected year will be shown here.</p>
                 </div>
-                <p>The scrollbar below now controls the displayed time.</p> <!-- Updated paragraph -->
+                <!-- The placeholder regions can remain or be removed, let's keep them for now for some visual structure -->
+                <div style="display: flex; margin-top:10px;">
+                    <div style="flex: 1; height: 150px; background-color: lightblue; border: 1px solid blue; display: flex; align-items: center; justify-content: center;">Region 1</div>
+                    <div style="flex: 1; height: 150px; background-color: lightgreen; border: 1px solid green; display: flex; align-items: center; justify-content: center;">Region 2</div>
+                    <div style="flex: 1; height: 150px; background-color: lightcoral; border: 1px solid red; display: flex; align-items: center; justify-content: center;">Region 3</div>
+                </div>
+                <p style="margin-top:10px;">The scrollbar below controls the displayed time and events.</p>
             </div>
         </div>
     </div>

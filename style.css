@@ -2,67 +2,96 @@ body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    overflow: hidden; /* Important to prevent double scrollbars */
+    overflow: hidden;
     font-family: sans-serif;
 }
 
+.admin-nav { /* Style for the admin link container */
+    padding: 10px;
+    text-align: right;
+    background-color: #f8f9fa; /* Light background for the nav bar */
+    /* Assuming approx 40px height with padding */
+    height: 20px; /* Content height, padding adds to total */
+}
+
+.admin-nav a { /* Style for the admin link itself */
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.admin-nav a:hover {
+    text-decoration: underline;
+}
+
 #main-container {
-    height: calc(100vh - 20px); /* Adjust 20px if scrollbar height changes */
-    overflow-x: hidden; /* Hide native horizontal scrollbar */
-    overflow-y: hidden; /* Assuming timeline/map manage their own internal scroll or fit */
+    /* admin-nav has 20px content + 20px padding = 40px. Scrollbar is 20px. */
+    height: calc(100vh - 20px - 40px);
+    overflow-x: hidden;
+    overflow-y: auto; /* Allow #map to scroll vertically if its content overflows */
 }
 
 #content-wrapper {
     display: flex;
-    width: 100%; /* Changed from 200% - content now fits in viewport */
-    height: 100%; /* Fill the main-container height */
+    width: 100%;
+    height: 100%; /* This will make content-wrapper honor main-container's height */
 }
 
-#timeline {
-    width: 50%; /* Takes half of the content-wrapper's width */
-    height: 100%; /* Fill the height of content-wrapper */
-    background-color: #f0f0f0;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto; /* Allow vertical scroll for timeline content if it exceeds height */
-}
+/* #timeline rule is removed */
 
 #map {
-    width: 50%; /* Takes the other half */
-    height: 100%; /* Fill the height of content-wrapper */
+    width: 100%; /* Changed from 50% */
+    /*
+      Map should fill the content-wrapper. If content-wrapper has 100% height
+      of a scrollable main-container, map does not need its own height:100%
+      if main-container is the one scrolling.
+      However, if map itself is meant to be the scrollable entity within a fixed main-container/content-wrapper,
+      then height: 100% on map and overflow-y: auto on map is needed.
+      The current setup makes main-container the scrollport for map's content.
+    */
     background-color: #e0e0e0;
     padding: 20px;
     box-sizing: border-box;
-    display: flex; /* Added to allow flex layout for children like current-time-display */
-    flex-direction: column; /* Stack children vertically */
-    /* overflow-y: auto; if map content needs to scroll vertically */
+    display: flex;
+    flex-direction: column;
 }
 
-/* Styles for #current-time-display are currently inline in HTML */
-/* Example if we moved them to CSS:
 #current-time-display {
-    font-size: 2em;
+    font-size: 1.5em;
     text-align: center;
-    padding: 20px;
+    padding: 10px;
     color: #333;
+    flex-shrink: 0; /* Prevent shrinking if map content grows */
 }
-*/
+
+#event-display {
+    min-height: 50px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    margin-top: 10px;
+    flex-grow: 1; /* Allow it to take available vertical space */
+    overflow-y: auto; /* If many events, allow this section to scroll */
+    /* Adding a default height for the container of regions, etc. */
+    display: flex;
+    flex-direction: column; /* children inside event-display will stack */
+}
 
 #scrollbar-container {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 20px; /* Height of the scrollbar track */
+    height: 20px;
     background-color: #ccc;
     z-index: 1000;
 }
 
 #scrollbar-thumb {
-    height: 100%; /* Thumb takes full height of the container */
+    height: 100%;
     background-color: #555;
-    border-radius: 3px; /* Slightly rounded corners */
+    border-radius: 3px;
     position: absolute;
-    left: 0; /* Initial position */
-    /* Width will be set by JavaScript, but now represents time progression */
+    left: 0;
+    /* Width will be set by JavaScript */
 }
