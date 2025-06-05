@@ -57,11 +57,12 @@ body, html {
 }
 
 #current-time-display {
-    font-size: 1.5em;
+    font-size: 1.2em;  /* Reduced from 1.5em */
+    line-height: 1.4;  /* Added for readability on wrap */
     text-align: center;
     padding: 10px;
     color: #333;
-    flex-shrink: 0; /* Prevent shrinking if map content grows */
+    flex-shrink: 0;
 }
 
 #event-display {
