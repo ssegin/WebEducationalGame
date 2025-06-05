@@ -8,19 +8,14 @@ body, html {
 
 #main-container {
     height: calc(100vh - 20px); /* Adjust 20px if scrollbar height changes */
-    overflow-x: hidden; /* Hide native horizontal scrollbar, custom one is used */
-    /* overflow-y can be auto or scroll if timeline/map content is taller than main-container */
-    overflow-y: hidden; /* Assuming timeline/map manage their own internal scroll if needed or fit */
-    /* Added to allow main-container to actually scroll its content horizontally */
-    /* This was an oversight in the plan, content-wrapper scrolls, but main-container needs overflow-x: scroll internally for JS to work, then hidden by -webkit-scrollbar etc. */
-    /* However, the prompt explicitly says overflow-x: hidden. The JS will control scrollLeft of main-container directly. */
+    overflow-x: hidden; /* Hide native horizontal scrollbar */
+    overflow-y: hidden; /* Assuming timeline/map manage their own internal scroll or fit */
 }
 
 #content-wrapper {
     display: flex;
-    width: 200%; /* Example: Content is twice the viewport width */
+    width: 100%; /* Changed from 200% - content now fits in viewport */
     height: 100%; /* Fill the main-container height */
-    /* The actual scrolling happens by changing mainContainer.scrollLeft in JS */
 }
 
 #timeline {
@@ -29,7 +24,7 @@ body, html {
     background-color: #f0f0f0;
     padding: 20px;
     box-sizing: border-box;
-    /* Add overflow-y: auto; if timeline content can exceed height */
+    overflow-y: auto; /* Allow vertical scroll for timeline content if it exceeds height */
 }
 
 #map {
@@ -38,8 +33,20 @@ body, html {
     background-color: #e0e0e0;
     padding: 20px;
     box-sizing: border-box;
-    /* Add overflow-y: auto; if map content can exceed height */
+    display: flex; /* Added to allow flex layout for children like current-time-display */
+    flex-direction: column; /* Stack children vertically */
+    /* overflow-y: auto; if map content needs to scroll vertically */
 }
+
+/* Styles for #current-time-display are currently inline in HTML */
+/* Example if we moved them to CSS:
+#current-time-display {
+    font-size: 2em;
+    text-align: center;
+    padding: 20px;
+    color: #333;
+}
+*/
 
 #scrollbar-container {
     position: fixed;
@@ -57,5 +64,5 @@ body, html {
     border-radius: 3px; /* Slightly rounded corners */
     position: absolute;
     left: 0; /* Initial position */
-    /* Width will be set by JavaScript */
+    /* Width will be set by JavaScript, but now represents time progression */
 }

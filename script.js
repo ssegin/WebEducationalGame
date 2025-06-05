@@ -1,64 +1,73 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const mainContainer = document.getElementById('main-container');
-    const contentWrapper = document.getElementById('content-wrapper'); // Used to get full scrollable width
     const scrollbarThumb = document.getElementById('scrollbar-thumb');
     const scrollbarContainer = document.getElementById('scrollbar-container');
+    const currentTimeDisplay = document.getElementById('current-time-display');
 
-    function updateScrollbar() {
-        // scrollWidth of mainContainer might not be what we want if overflow-x is hidden.
-        // We should use the contentWrapper's width for total scrollable content.
-        // However, mainContainer.scrollLeft is what we control.
-        // Let's assume mainContainer's scrollWidth is correctly reflecting contentWrapper's width
-        // due to the structure, or if not, we might need to use contentWrapper.scrollWidth.
-        // For now, we'll use mainContainer.scrollWidth and mainContainer.clientWidth.
-        // This implies that mainContainer itself must be the element that has effective scrollWidth.
-        // With overflow-x: hidden on main-container, its scrollWidth might be just its clientWidth.
-        // The actual element that scrolls is content-wrapper, but we are listening to scroll events on main-container.
-        // Let's make mainContainer the scrollable element for JS, and hide its bar with CSS.
-        // This means main-container needs overflow-x: scroll internally, but CSS hides the bar.
-        // The current style.css has overflow-x: hidden for main-container.
-        // This needs mainContainer.scrollLeft to be programmatically changed.
-        // The scroll event on mainContainer will only fire if it's actually scrollable (overflow: scroll or auto)
-        // OR if its scrollLeft property is changed programmatically, which is what we do.
+    const startYear = 1000;
+    const endYear = 2000;
+    let currentYear = startYear;
 
-        const scrollableWidth = mainContainer.scrollWidth - mainContainer.clientWidth;
-        if (scrollableWidth <= 0) {
-            scrollbarThumb.style.width = '0px'; // Hide thumb if not scrollable
+    // Function to update the time display on the map
+    function updateMapTime(year) {
+        currentYear = Math.round(year); // Ensure integer years
+        if (currentTimeDisplay) {
+            currentTimeDisplay.textContent = `Time: ${currentYear} AD`;
+        }
+    }
+
+    // Function to update the scrollbar thumb's visual position and width
+    function updateThumbAppearance() {
+        const totalYears = endYear - startYear;
+        // Ensure currentYear is within bounds, can happen if start/endYear change later
+        currentYear = Math.max(startYear, Math.min(endYear, currentYear));
+
+        if (totalYears <= 0) {
+            scrollbarThumb.style.width = '0px'; // Or hide it
+            scrollbarThumb.style.left = '0px';
             return;
         }
 
-        const scrollPercentage = mainContainer.scrollLeft / scrollableWidth;
+        const yearPercentage = (currentYear - startYear) / totalYears;
 
-        // Thumb width relative to the visible portion of the scrollbar container
-        const thumbWidth = Math.max(20, scrollbarContainer.clientWidth * (mainContainer.clientWidth / mainContainer.scrollWidth)); // Min width 20px
-
+        const thumbWidth = Math.max(30, scrollbarContainer.clientWidth * 0.1);
         scrollbarThumb.style.width = `${thumbWidth}px`;
-        const thumbPosition = scrollPercentage * (scrollbarContainer.clientWidth - thumbWidth);
-        scrollbarThumb.style.left = `${thumbPosition}px`;
+
+        const scrollableTrackWidth = scrollbarContainer.clientWidth - thumbWidth;
+        // Ensure scrollableTrackWidth is not negative if thumb is wider than container
+        const effectiveScrollableTrackWidth = Math.max(0, scrollableTrackWidth);
+
+        const thumbPosition = yearPercentage * effectiveScrollableTrackWidth;
+        scrollbarThumb.style.left = `${Math.min(Math.max(0, thumbPosition), effectiveScrollableTrackWidth)}px`;
     }
 
-    // Listen for scroll events on mainContainer
-    // This event fires when mainContainer.scrollLeft changes
-    mainContainer.addEventListener('scroll', updateScrollbar);
-
-    // Initial update
-    // We need to ensure mainContainer has its scrollWidth correctly set up first.
-    // This can be tricky if its overflow is hidden.
-    // A slight delay or ensuring content is loaded might be needed for accurate scrollWidth.
-    requestAnimationFrame(updateScrollbar);
+    // Initial setup
+    updateMapTime(startYear);
+    // Defer initial thumb appearance update until after layout is stable
+    requestAnimationFrame(() => {
+        updateThumbAppearance();
+    });
 
 
     let isDragging = false;
-    let startX;
-    let startScrollLeft;
+    let dragStartX;
+    let thumbStartLeftProportion; // Store proportion to handle resizes during drag better
 
     scrollbarThumb.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Prevent text selection and other default behaviors
+        e.preventDefault();
         isDragging = true;
-        startX = e.clientX;
-        startScrollLeft = mainContainer.scrollLeft;
+        dragStartX = e.clientX;
+
+        const thumbWidth = scrollbarThumb.offsetWidth;
+        const scrollableTrackWidth = Math.max(0, scrollbarContainer.clientWidth - thumbWidth);
+
+        if (scrollableTrackWidth > 0) {
+            thumbStartLeftProportion = scrollbarThumb.offsetLeft / scrollableTrackWidth;
+        } else {
+            thumbStartLeftProportion = 0;
+        }
+
         scrollbarThumb.style.backgroundColor = '#333';
-        document.body.style.cursor = 'grabbing'; // Indicate dragging
+        document.body.style.cursor = 'grabbing';
         document.body.style.userSelect = 'none';
     });
 
@@ -66,45 +75,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isDragging) return;
         e.preventDefault();
 
-        const deltaX = e.clientX - startX;
-        // How much the thumb has moved as a percentage of the scrollbar track
-        const scrollableTrackWidth = scrollbarContainer.clientWidth - scrollbarThumb.offsetWidth;
+        const deltaX = e.clientX - dragStartX;
+        const thumbWidth = scrollbarThumb.offsetWidth;
+        const scrollableTrackWidth = Math.max(0, scrollbarContainer.clientWidth - thumbWidth);
 
-        if (scrollableTrackWidth === 0) return; // Avoid division by zero
+        if (scrollableTrackWidth <= 0) return;
 
-        // Calculate how much mainContainer should scroll
-        // The change in scrollLeft should be proportional to how much the thumb moved relative to the track
-        const scrollDelta = (deltaX / scrollableTrackWidth) * (mainContainer.scrollWidth - mainContainer.clientWidth);
-        mainContainer.scrollLeft = startScrollLeft + scrollDelta;
+        // Calculate new thumb left based on initial proportion and delta, then clamp
+        // This approach makes the thumb move relative to its initial proportional spot + drag delta
+        let newThumbLeft = (thumbStartLeftProportion * scrollableTrackWidth) + deltaX;
+        newThumbLeft = Math.max(0, Math.min(newThumbLeft, scrollableTrackWidth));
+
+        const positionPercentage = newThumbLeft / scrollableTrackWidth;
+        const newYear = startYear + (positionPercentage * (endYear - startYear));
+
+        updateMapTime(newYear); // Update time based on exact dragged position
+        scrollbarThumb.style.left = `${newThumbLeft}px`; // Update thumb position directly
     });
 
-    document.addEventListener('mouseup', (e) => {
+    document.addEventListener('mouseup', () => {
         if (isDragging) {
             isDragging = false;
             scrollbarThumb.style.backgroundColor = '#555';
             document.body.style.cursor = 'default';
             document.body.style.userSelect = '';
+            // After dragging, currentYear is set. Update thumb based on this canonical value.
+            requestAnimationFrame(updateThumbAppearance);
         }
     });
 
     scrollbarContainer.addEventListener('click', (e) => {
-        if (e.target === scrollbarContainer) { // Clicked on container, not thumb
-            const rect = scrollbarContainer.getBoundingClientRect();
-            const clickX = e.clientX - rect.left; // X position relative to container
-            const thumbWidth = scrollbarThumb.offsetWidth;
+        if (e.target === scrollbarThumb || e.target.parentNode === scrollbarThumb) return;
 
-            // Calculate desired scroll position as if the middle of the thumb was clicked
-            const desiredThumbLeft = clickX - thumbWidth / 2;
-            const scrollableTrackWidth = scrollbarContainer.clientWidth - thumbWidth;
+        const rect = scrollbarContainer.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const thumbWidth = Math.max(30, scrollbarContainer.clientWidth * 0.1); // Recalculate expected thumb width
+        const scrollableTrackWidth = Math.max(0, scrollbarContainer.clientWidth - thumbWidth);
 
-            if (scrollableTrackWidth <= 0) return;
+        if (scrollableTrackWidth <= 0) return;
 
-            const scrollPercentage = Math.min(1, Math.max(0, desiredThumbLeft / scrollableTrackWidth));
-            mainContainer.scrollLeft = scrollPercentage * (mainContainer.scrollWidth - mainContainer.clientWidth);
-        }
+        let desiredThumbLeft = clickX - thumbWidth / 2;
+        desiredThumbLeft = Math.max(0, Math.min(desiredThumbLeft, scrollableTrackWidth));
+
+        const positionPercentage = desiredThumbLeft / scrollableTrackWidth;
+        const newYear = startYear + (positionPercentage * (endYear - startYear));
+
+        updateMapTime(newYear);
+        requestAnimationFrame(updateThumbAppearance);
     });
 
     window.addEventListener('resize', () => {
-        requestAnimationFrame(updateScrollbar);
+        requestAnimationFrame(updateThumbAppearance);
     });
 });

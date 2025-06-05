@@ -28,14 +28,14 @@
             </div>
             <div id="map">
                 <h2>World Map (Conceptual)</h2>
-                <div style="display: flex; width: 1500px;"> <!-- This inner div makes the map section wide -->
-                    <div style="width: 300px; height: 300px; background-color: lightblue; border: 1px solid blue; display: flex; align-items: center; justify-content: center;">Region 1</div>
-                    <div style="width: 300px; height: 300px; background-color: lightgreen; border: 1px solid green; display: flex; align-items: center; justify-content: center;">Region 2</div>
-                    <div style="width: 300px; height: 300px; background-color: lightcoral; border: 1px solid red; display: flex; align-items: center; justify-content: center;">Region 3</div>
-                    <div style="width: 300px; height: 300px; background-color: lightgoldenrodyellow; border: 1px solid gold; display: flex; align-items: center; justify-content: center;">Region 4</div>
-                    <div style="width: 300px; height: 300px; background-color: lightsalmon; border: 1px solid orange; display: flex; align-items: center; justify-content: center;">Region 5</div>
+                <div id="current-time-display" style="font-size: 2em; text-align: center; padding: 20px;">Time: 1000 AD</div>
+                <!-- The placeholder regions can remain for visual context, but their collective width is no longer the focus -->
+                <div style="display: flex;"> <!-- Removed width: 1500px -->
+                    <div style="flex: 1; height: 200px; background-color: lightblue; border: 1px solid blue; display: flex; align-items: center; justify-content: center;">Region 1</div>
+                    <div style="flex: 1; height: 200px; background-color: lightgreen; border: 1px solid green; display: flex; align-items: center; justify-content: center;">Region 2</div>
+                    <div style="flex: 1; height: 200px; background-color: lightcoral; border: 1px solid red; display: flex; align-items: center; justify-content: center;">Region 3</div>
                 </div>
-                <p>This map area is intentionally wide to demonstrate horizontal scrolling.</p>
+                <p>The scrollbar below now controls the displayed time.</p> <!-- Updated paragraph -->
             </div>
         </div>
     </div>
