@@ -40,20 +40,25 @@ body, html {
 /* #timeline rule is removed */
 
 #map {
-    width: 100%; /* Changed from 50% */
-    /*
-      Map should fill the content-wrapper. If content-wrapper has 100% height
-      of a scrollable main-container, map does not need its own height:100%
-      if main-container is the one scrolling.
-      However, if map itself is meant to be the scrollable entity within a fixed main-container/content-wrapper,
-      then height: 100% on map and overflow-y: auto on map is needed.
-      The current setup makes main-container the scrollport for map's content.
-    */
+    width: 50%;
+    height: 100%; /* To fill the content-wrapper height */
+    overflow-y: auto; /* To allow map content to scroll if it's taller than the container */
     background-color: #e0e0e0;
     padding: 20px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+}
+
+#description-tab {
+    width: 50%;
+    height: 100%; /* To fill the content-wrapper height */
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #f0f0f0; /* A slightly different background */
+    overflow-y: auto; /* To allow its content to scroll */
+    display: flex; /* To manage children like current-time-display and event-display */
+    flex-direction: column; /* Stack children vertically */
 }
 
 #current-time-display {

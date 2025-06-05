@@ -15,18 +15,20 @@
             <!-- #timeline div is removed -->
             <div id="map"> <!-- This will now implicitly take full width of content-wrapper -->
                 <h2>World Map (Conceptual)</h2>
-                <div id="current-time-display">Time: 1000 AD</div>
-                <div id="event-display">
-                    <!-- Event descriptions will appear here -->
-                    <p>Event details for the selected year will be shown here.</p>
-                </div>
                 <!-- The placeholder regions can remain or be removed, let's keep them for now for some visual structure -->
                 <div style="display: flex; margin-top:10px;">
                     <div style="flex: 1; height: 150px; background-color: lightblue; border: 1px solid blue; display: flex; align-items: center; justify-content: center;">Region 1</div>
                     <div style="flex: 1; height: 150px; background-color: lightgreen; border: 1px solid green; display: flex; align-items: center; justify-content: center;">Region 2</div>
                     <div style="flex: 1; height: 150px; background-color: lightcoral; border: 1px solid red; display: flex; align-items: center; justify-content: center;">Region 3</div>
                 </div>
-                <p style="margin-top:10px;">The scrollbar below controls the displayed time and events.</p>
+                <p style="margin-top:10px;">The scrollbar below controls the displayed time and events.</p> <!-- This paragraph might be better suited for the description tab or removed if redundant -->
+            </div>
+            <div id="description-tab">
+                <div id="current-time-display">Time: 1000 AD</div> <!-- Moved -->
+                <div id="event-display">
+                    <!-- Event descriptions will appear here -->
+                    <p>Event details for the selected year will be shown here.</p> <!-- This is the original placeholder -->
+                </div>
             </div>
         </div>
     </div>
