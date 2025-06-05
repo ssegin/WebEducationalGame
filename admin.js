@@ -2,100 +2,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Elements for Event Management
     const eventForm = document.getElementById('eventForm');
     const eventListUL = document.getElementById('eventList');
-    const eventStorageKey = 'timelineEvents'; // Renamed for clarity
+    const eventStorageKey = 'timelineEvents'; // Using the consistent key for events
 
-    // Elements for Period Management
-    const periodForm = document.getElementById('periodForm');
-    const periodListUL = document.getElementById('periodList');
-    const periodStorageKey = 'timelinePeriods';
-
-    // --- Period Management Functions ---
-    function loadPeriods() {
-        if (!periodListUL) return; // In case the element is not on the page
-        const periods = getPeriodsFromStorage();
-        periodListUL.innerHTML = '';
-
-        if (periods.length === 0) {
-            periodListUL.innerHTML = '<li>No periods defined yet.</li>';
-            return;
-        }
-
-        periods.forEach((period, index) => {
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-                <span><strong>${period.name}</strong> (${period.startYear} to ${period.endYear})</span>
-                <button class="delete-btn period-delete-btn" data-index="${index}">Delete Period</button>
-            `;
-            periodListUL.appendChild(listItem);
-        });
-        addDeletePeriodButtonListeners();
-    }
-
-    function getPeriodsFromStorage() {
-        const periodsJson = localStorage.getItem(periodStorageKey);
-        return periodsJson ? JSON.parse(periodsJson) : [];
-    }
-
-    function savePeriodsToStorage(periods) {
-        localStorage.setItem(periodStorageKey, JSON.stringify(periods));
-    }
-
-    if (periodForm) {
-        periodForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const nameInput = document.getElementById('periodName');
-            const startYearInput = document.getElementById('periodStartYear');
-            const endYearInput = document.getElementById('periodEndYear');
-
-            const name = nameInput.value.trim();
-            const startYear = parseInt(startYearInput.value);
-            const endYear = parseInt(endYearInput.value);
-
-            if (name === '' || isNaN(startYear) || isNaN(endYear)) {
-                alert('Please enter a valid name and start/end years for the period.');
-                return;
-            }
-            if (startYear > endYear) {
-                alert('Start year cannot be after end year.');
-                return;
-            }
-
-            const newPeriod = { name, startYear, endYear };
-            const periods = getPeriodsFromStorage();
-            periods.push(newPeriod);
-            periods.sort((a, b) => a.startYear - b.startYear || a.endYear - b.endYear);
-
-            savePeriodsToStorage(periods);
-            loadPeriods();
-            periodForm.reset();
-        });
-    }
-
-    function addDeletePeriodButtonListeners() {
-        if (!periodListUL) return;
-        const deleteButtons = periodListUL.querySelectorAll('.delete-btn.period-delete-btn');
-        deleteButtons.forEach(button => {
-            if (button.dataset.listenerAttached === 'true') return;
-            button.addEventListener('click', (e) => {
-                const indexToDelete = parseInt(e.target.getAttribute('data-index'));
-                deletePeriod(indexToDelete);
-            });
-            button.dataset.listenerAttached = 'true';
-        });
-    }
-
-    function deletePeriod(index) {
-        const periods = getPeriodsFromStorage();
-        if (index >= 0 && index < periods.length) {
-            periods.splice(index, 1);
-            savePeriodsToStorage(periods);
-            loadPeriods();
-        }
-    }
-
-    // --- Event Management Functions (largely existing logic) ---
+    // --- Event Management Functions ---
     function loadEvents() {
-        if (!eventListUL) return; // In case the element is not on the page
+        if (!eventListUL) return;
         const events = getEventsFromStorage();
         eventListUL.innerHTML = '';
 
@@ -109,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             listItem.innerHTML = `
                 <span><strong>${event.year} AD:</strong> ${event.description}</span>
                 <button class="delete-btn event-delete-btn" data-index="${index}">Delete Event</button>
-            `; // Added 'event-delete-btn' for clarity
+            `;
             eventListUL.appendChild(listItem);
         });
         addDeleteEventButtonListeners();
@@ -151,9 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addDeleteEventButtonListeners() {
         if (!eventListUL) return;
+        // Query for delete buttons specifically for events, if specific class was used
         const deleteButtons = eventListUL.querySelectorAll('.delete-btn.event-delete-btn');
         deleteButtons.forEach(button => {
+            // Simple check to prevent adding multiple listeners if function is called again
             if (button.dataset.listenerAttached === 'true') return;
+
             button.addEventListener('click', (e) => {
                 const indexToDelete = parseInt(e.target.getAttribute('data-index'));
                 deleteEvent(indexToDelete);
@@ -172,6 +86,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initial load when the page is ready
-    loadPeriods();
     loadEvents();
 });

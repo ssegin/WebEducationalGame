@@ -48,38 +48,8 @@
     <div class="container">
         <h1>Timeline Event Management</h1>
 
-        <hr style="margin: 30px 0;">
-
-        <section id="period-management">
-            <h2>Period Management</h2>
-            <form id="periodForm">
-                <div>
-                    <label for="periodName">Period Name/Description:</label>
-                    <input type="text" id="periodName" name="periodName" required placeholder="e.g., Roman Republic">
-                </div>
-                <div>
-                    <label for="periodStartYear">Start Year:</label>
-                    <input type="number" id="periodStartYear" name="periodStartYear" required placeholder="e.g., -509 (for 509 BC)">
-                </div>
-                <div>
-                    <label for="periodEndYear">End Year:</label>
-                    <input type="number" id="periodEndYear" name="periodEndYear" required placeholder="e.g., -27 (for 27 BC)">
-                </div>
-                <button type="submit">Save Period</button>
-            </form>
-
-            <h3>Current Periods</h3>
-            <ul id="periodList" class="event-list">
-                <!-- Periods from local storage will be listed here -->
-                <li>No periods defined yet.</li>
-            </ul>
-        </section>
-
-        <hr style="margin: 30px 0;">
-
-        <!-- Existing Event Management section follows -->
         <section id="add-event-form">
-            <h2>Add New Event (within a Period)</h2>
+            <h2>Add New Event</h2>
             <form id="eventForm">
                 <div>
                     <label for="eventYear">Year (AD):</label>

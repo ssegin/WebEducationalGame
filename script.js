@@ -4,130 +4,147 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentTimeDisplay = document.getElementById('current-time-display');
     const eventDisplay = document.getElementById('event-display');
 
-    const periodStorageKey = 'timelinePeriods';
     const eventStorageKey = 'timelineEvents';
 
-    let allPeriods = [];
     let allEvents = [];
-    let currentPeriodIndex = 0; // Default to the first period
+    let startYear = -10;
+    let endYear = 10;
+    let currentYear = startYear;
+    let isFirstLoad = true;
 
     // --- UTILITY: BC/AD Year Formatting ---
     function formatYear(year) {
         if (year === undefined || year === null) return "N/A";
-        if (year < 0) return `${Math.abs(year)} BC`;
-        if (year === 0) return `1 BC`; // Common convention, as there's no year 0
-        return `${year} AD`;
+        const yearNum = Math.round(year); // Ensure we work with rounded numbers for display
+        if (yearNum < 0) return `${Math.abs(yearNum)} BC`;
+        if (yearNum === 0) return `1 BC`; // Or handle as per convention
+        return `${yearNum} AD`;
     }
 
-    // --- DATA LOADING ---
-    function loadData() {
-        const periodsJson = localStorage.getItem(periodStorageKey);
-        allPeriods = periodsJson ? JSON.parse(periodsJson) : [];
-        allPeriods.sort((a, b) => a.startYear - b.startYear || a.endYear - b.endYear);
-
+    // --- DATA LOADING AND TIME RANGE DETERMINATION ---
+    function loadEventsAndSetRange() {
         const eventsJson = localStorage.getItem(eventStorageKey);
         allEvents = eventsJson ? JSON.parse(eventsJson) : [];
-        allEvents.sort((a,b) => a.year - b.year);
+        allEvents.sort((a, b) => a.year - b.year);
 
-        if (allPeriods.length === 0) {
-            allPeriods = [{
-                name: "Default Period (No Periods Defined)",
-                startYear: new Date().getFullYear() - 5, // Default to a small recent range
-                endYear: new Date().getFullYear() + 5
-            }];
+        if (allEvents.length > 0) {
+            let minYear = allEvents[0].year;
+            let maxYear = allEvents[allEvents.length - 1].year;
+
+            const yearSpan = maxYear - minYear;
+            const padding = Math.max(10, Math.floor(yearSpan * 0.1));
+
+            startYear = minYear - padding;
+            endYear = maxYear + padding;
+
+            if (endYear - startYear < 20) {
+                const mid = Math.round((startYear + endYear) / 2);
+                startYear = mid - 10;
+                endYear = mid + 10;
+            }
+            if (startYear === endYear) { // Ensure not identical
+                endYear += 10;
+            }
+        } else {
+            startYear = -10;
+            endYear = 10;
         }
-        currentPeriodIndex = Math.max(0, Math.min(currentPeriodIndex, allPeriods.length - 1));
+
+        if (isFirstLoad) {
+            currentYear = startYear;
+            isFirstLoad = false;
+        } else {
+            // Clamp currentYear to the new range if it's outside
+            currentYear = Math.max(startYear, Math.min(endYear, currentYear));
+        }
     }
 
     // --- UI UPDATE FUNCTIONS ---
-    function updatePageDisplays() {
-        if (allPeriods.length === 0) { // Should be handled by default period creation
-            currentTimeDisplay.textContent = "No periods available.";
-            eventDisplay.innerHTML = "<p>Please define periods and events in the admin page.</p>";
-            updateThumbAppearance();
-            return;
-        }
-
-        const selectedPeriod = allPeriods[currentPeriodIndex];
-
+    function updateCurrentYearDisplayDOM(yearToDisplay) {
         if (currentTimeDisplay) {
-            currentTimeDisplay.innerHTML = `
-                <strong>Period:</strong> ${selectedPeriod.name}
-                <em>(${formatYear(selectedPeriod.startYear)} - ${formatYear(selectedPeriod.endYear)})</em>
-            `;
+            currentTimeDisplay.textContent = formatYear(yearToDisplay);
         }
+    }
 
-        if (eventDisplay) {
-            const eventsInPeriod = allEvents.filter(event =>
-                event.year >= selectedPeriod.startYear && event.year <= selectedPeriod.endYear
-            );
+    function updateEventDisplayDOM(yearToFilter) {
+        if (!eventDisplay) return;
+        const roundedYearToFilter = Math.round(yearToFilter);
+        const eventsForYear = allEvents.filter(event => event.year === roundedYearToFilter);
 
-            if (eventsInPeriod.length > 0) {
-                let eventsHtml = `<h3>Events in ${selectedPeriod.name}:</h3><ul>`;
-                eventsInPeriod.forEach(event => {
-                    eventsHtml += `<li><strong>${formatYear(event.year)}:</strong> ${event.description}</li>`;
-                });
-                eventsHtml += `</ul>`;
-                eventDisplay.innerHTML = eventsHtml;
-            } else {
-                eventDisplay.innerHTML = `<p>No specific events recorded for the period: ${selectedPeriod.name}.</p>`;
-            }
+        if (eventsForYear.length > 0) {
+            let htmlContent = `<h3>Events in ${formatYear(roundedYearToFilter)}:</h3><ul>`;
+            eventsForYear.forEach(event => {
+                htmlContent += `<li>${event.description}</li>`;
+            });
+            htmlContent += `</ul>`;
+            eventDisplay.innerHTML = htmlContent;
+        } else {
+            eventDisplay.innerHTML = `<p>No specific events recorded for ${formatYear(roundedYearToFilter)}.</p>`;
         }
-        updateThumbAppearance();
     }
 
     function updateThumbAppearance() {
-        const totalPeriods = allPeriods.length;
-        if (totalPeriods === 0) {
-            scrollbarThumb.style.width = '0%';
-            scrollbarThumb.style.left = '0%';
+        const totalYearSpan = endYear - startYear;
+        if (totalYearSpan <= 0) {
+             scrollbarThumb.style.width = '3%'; // Default small width
+             scrollbarThumb.style.left = '0%';
             return;
         }
 
-        const thumbWidthPercentage = Math.max(5, 100 / totalPeriods); // Each slot is (100/total)%, min 5%
+        // Ensure currentYear is within bounds for percentage calculation
+        const boundedCurrentYear = Math.max(startYear, Math.min(currentYear, endYear));
+        const yearPercentageOffset = (boundedCurrentYear - startYear) / totalYearSpan;
+
+        const thumbWidthPercentage = 3;
         scrollbarThumb.style.width = `${thumbWidthPercentage}%`;
 
-        const thumbPositionPercentage = currentPeriodIndex * (100 / totalPeriods);
-        scrollbarThumb.style.left = `${thumbPositionPercentage}%`;
+        const maxThumbLeftPercentage = 100 - thumbWidthPercentage;
+        const thumbPositionPercentage = yearPercentageOffset * maxThumbLeftPercentage;
+
+        scrollbarThumb.style.left = `${Math.max(0, Math.min(thumbPositionPercentage, maxThumbLeftPercentage))}%`;
+    }
+
+    // --- Combined Update Function ---
+    function updatePageForCurrentYear() {
+        // currentYear can be fractional during drag, round for display logic
+        const displayYear = Math.round(currentYear);
+        updateCurrentYearDisplayDOM(displayYear);
+        updateEventDisplayDOM(displayYear);
+        updateThumbAppearance(); // Thumb appearance uses the potentially fractional currentYear
     }
 
     // --- SCROLLBAR INTERACTION ---
     let isDragging = false;
-
-    function handleScrollbarInteraction(clientX) {
-        const rect = scrollbarContainer.getBoundingClientRect();
-        const scrollbarWidth = rect.width;
-        if (scrollbarWidth <= 0) return; // Avoid division by zero or NaN
-
-        let clickX = clientX - rect.left;
-        let positionPercentage = (clickX / scrollbarWidth) * 100;
-        positionPercentage = Math.max(0, Math.min(positionPercentage, 99.99)); // Clamp (99.99 to avoid index out of bounds with floor)
-
-        if (allPeriods.length > 0) {
-            const slotWidthPercentage = 100 / allPeriods.length;
-            const newIndex = Math.floor(positionPercentage / slotWidthPercentage);
-            currentPeriodIndex = Math.min(newIndex, allPeriods.length - 1);
-        } else {
-            currentPeriodIndex = 0;
-        }
-
-        updatePageDisplays();
-    }
+    let dragStartYearValue;
+    let dragMouseStartX;
 
     scrollbarThumb.addEventListener('mousedown', (e) => {
         e.preventDefault();
         isDragging = true;
+        dragStartYearValue = currentYear; // Store the precise fractional year
+        dragMouseStartX = e.clientX;
         scrollbarThumb.style.backgroundColor = '#333';
         document.body.style.cursor = 'grabbing';
         document.body.style.userSelect = 'none';
-        // Optional: update on mousedown if desired, otherwise wait for mousemove/up
-        // handleScrollbarInteraction(e.clientX);
     });
 
     document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         e.preventDefault();
-        handleScrollbarInteraction(e.clientX);
+
+        const totalYearSpan = endYear - startYear;
+        if (totalYearSpan <= 0) return;
+
+        const rect = scrollbarContainer.getBoundingClientRect();
+        const scrollbarWidth = rect.width;
+        if (scrollbarWidth === 0) return; // Avoid division by zero
+
+        const mouseDeltaX = e.clientX - dragMouseStartX;
+        const yearDelta = (mouseDeltaX / scrollbarWidth) * totalYearSpan;
+        let newYear = dragStartYearValue + yearDelta;
+
+        currentYear = Math.max(startYear, Math.min(endYear, newYear));
+        updatePageForCurrentYear();
     });
 
     document.addEventListener('mouseup', () => {
@@ -136,16 +153,27 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollbarThumb.style.backgroundColor = '#555';
             document.body.style.cursor = 'default';
             document.body.style.userSelect = '';
-            // updatePageDisplays(); // Typically already called by the last mousemove
+            // currentYear is already updated, just ensure its final state is rendered
+            // No need to round here if we want to keep fractional precision until next discrete action
+            updatePageForCurrentYear();
         }
     });
 
     scrollbarContainer.addEventListener('click', (e) => {
-        // Prevent click from re-triggering if it was part of a drag ending on the container
-        if (e.target === scrollbarThumb && isDragging) return;
-        if (scrollbarThumb.contains(e.target) && isDragging) return; // if click is on thumb during drag
+        if (e.target === scrollbarThumb || scrollbarThumb.contains(e.target)) return;
 
-        handleScrollbarInteraction(e.clientX);
+        const rect = scrollbarContainer.getBoundingClientRect();
+        const scrollbarWidth = rect.width;
+        if (scrollbarWidth === 0) return;
+
+        let clickX = e.clientX - rect.left;
+        let positionPercentage = (clickX / scrollbarWidth);
+        positionPercentage = Math.max(0, Math.min(positionPercentage, 1));
+
+        currentYear = startYear + (positionPercentage * (endYear - startYear));
+        // Round after click for a discrete jump, or keep fractional if preferred
+        // currentYear = Math.round(currentYear);
+        updatePageForCurrentYear();
     });
 
     // --- WINDOW RESIZE & STORAGE LISTENER ---
@@ -154,23 +182,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('storage', (e) => {
-        if (e.key === periodStorageKey || e.key === eventStorageKey) {
-            const oldPeriodName = (allPeriods.length > 0 && currentPeriodIndex < allPeriods.length)
-                                ? allPeriods[currentPeriodIndex].name : null;
+        if (e.key === eventStorageKey) {
+            const previousCurrentYear = currentYear;
+            isFirstLoad = true; // This will force currentYear to be startYear after load if it's out of new range
+            loadEventsAndSetRange();
 
-            loadData();
-
-            if (oldPeriodName) {
-                const newIdx = allPeriods.findIndex(p => p.name === oldPeriodName);
-                currentPeriodIndex = (newIdx !== -1) ? newIdx : 0;
-            } else {
-                currentPeriodIndex = 0;
+            if (previousCurrentYear >= startYear && previousCurrentYear <= endYear) {
+                currentYear = previousCurrentYear;
+                isFirstLoad = false; // Undo the reset if previous year is still valid
             }
-            updatePageDisplays();
+            updatePageForCurrentYear();
         }
     });
 
     // --- INITIALIZATION ---
-    loadData();
-    updatePageDisplays();
+    loadEventsAndSetRange();
+    updatePageForCurrentYear();
 });
