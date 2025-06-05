@@ -1,0 +1,98 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+.admin-nav { /* Style for the admin link container */
+    padding: 10px;
+    text-align: right;
+    background-color: #f8f9fa; /* Light background for the nav bar */
+    /* Assuming approx 40px height with padding */
+    height: 20px; /* Content height, padding adds to total */
+}
+
+.admin-nav a { /* Style for the admin link itself */
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.admin-nav a:hover {
+    text-decoration: underline;
+}
+
+#main-container {
+    /* admin-nav has 20px content + 20px padding = 40px. Scrollbar is 20px. */
+    height: calc(100vh - 20px - 40px);
+    overflow-x: hidden;
+    overflow-y: auto; /* Allow #map to scroll vertically if its content overflows */
+}
+
+#content-wrapper {
+    display: flex;
+    width: 100%;
+    height: 100%; /* This will make content-wrapper honor main-container's height */
+}
+
+/* #timeline rule is removed */
+
+#map {
+    width: 100%; /* Changed from 50% */
+    /*
+      Map should fill the content-wrapper. If content-wrapper has 100% height
+      of a scrollable main-container, map does not need its own height:100%
+      if main-container is the one scrolling.
+      However, if map itself is meant to be the scrollable entity within a fixed main-container/content-wrapper,
+      then height: 100% on map and overflow-y: auto on map is needed.
+      The current setup makes main-container the scrollport for map's content.
+    */
+    background-color: #e0e0e0;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+#current-time-display {
+    font-size: 1.2em;  /* Reduced from 1.5em */
+    line-height: 1.4;  /* Added for readability on wrap */
+    text-align: center;
+    padding: 10px;
+    color: #333;
+    flex-shrink: 0;
+}
+
+#event-display {
+    min-height: 50px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    margin-top: 10px;
+    flex-grow: 1; /* Allow it to take available vertical space */
+    overflow-y: auto; /* If many events, allow this section to scroll */
+    /* Adding a default height for the container of regions, etc. */
+    display: flex;
+    flex-direction: column; /* children inside event-display will stack */
+}
+
+#scrollbar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background-color: #ccc;
+    z-index: 1000;
+}
+
+#scrollbar-thumb {
+    height: 100%;
+    background-color: #555;
+    border-radius: 3px;
+    position: absolute;
+    left: 0;
+    /* Width will be set by JavaScript */
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline and Map</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="admin-nav">
+        <a href="admin.html">Go to Admin Page</a>
+    </div>
+    <div id="main-container">
+        <div id="content-wrapper">
+            <!-- #timeline div is removed -->
+            <div id="map"> <!-- This will now implicitly take full width of content-wrapper -->
+                <h2>World Map (Conceptual)</h2>
+                <div id="current-time-display">Time: 1000 AD</div>
+                <div id="event-display">
+                    <!-- Event descriptions will appear here -->
+                    <p>Event details for the selected year will be shown here.</p>
+                </div>
+                <!-- The placeholder regions can remain or be removed, let's keep them for now for some visual structure -->
+                <div style="display: flex; margin-top:10px;">
+                    <div style="flex: 1; height: 150px; background-color: lightblue; border: 1px solid blue; display: flex; align-items: center; justify-content: center;">Region 1</div>
+                    <div style="flex: 1; height: 150px; background-color: lightgreen; border: 1px solid green; display: flex; align-items: center; justify-content: center;">Region 2</div>
+                    <div style="flex: 1; height: 150px; background-color: lightcoral; border: 1px solid red; display: flex; align-items: center; justify-content: center;">Region 3</div>
+                </div>
+                <p style="margin-top:10px;">The scrollbar below controls the displayed time and events.</p>
+            </div>
+        </div>
+    </div>
+    <div id="scrollbar-container">
+        <div id="scrollbar-thumb"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
