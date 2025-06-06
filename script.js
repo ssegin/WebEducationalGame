@@ -12,10 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let startYear = -10;
     let endYear = 10;
     let currentYear = startYear;
+    let currentMonth = null; // Added for month preservation
     let isAppInitialized = false; // Replaces isFirstLoad
 
     // --- UTILITY: BC/AD Year Formatting ---
-    function formatYear(year) {
+    function formatYear(year) { // Keep this if used elsewhere, or replace uses with formatYearMonth
         if (year === undefined || year === null) return "N/A";
         const yearNum = Math.round(year); // Ensure we work with rounded numbers for display
         if (yearNum < 0) return `${Math.abs(yearNum)} BC`;
@@ -23,11 +24,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${yearNum} AD`;
     }
 
+    function formatYearMonth(year, month) {
+        const yearNum = Math.round(year); // Should already be an integer
+        let yearStr;
+
+        if (yearNum < 0) yearStr = `${Math.abs(yearNum)} BC`;
+        else if (yearNum === 0) yearStr = `1 BC`; // Or other convention for year 0
+        else yearStr = `${yearNum} AD`;
+
+        if (month && month >= 1 && month <= 12) {
+            // Simple month number to string. Could extend to month names.
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                                "July", "August", "September", "October", "November", "December"];
+            // return `${yearStr} ${monthNames[month - 1]}`; // Using English month names
+            return `${yearStr} ${month}월`; // Using Korean month indication as per example
+        }
+        return yearStr;
+    }
+
     // --- DATA LOADING AND TIME RANGE DETERMINATION ---
     function loadEventsAndSetRange() {
         const eventsJson = localStorage.getItem(eventStorageKey);
         allEvents = eventsJson ? JSON.parse(eventsJson) : [];
-        allEvents.sort((a, b) => a.year - b.year);
+        // Sort by year, then by month
+        allEvents.sort((a, b) => {
+            if (a.year !== b.year) {
+                return a.year - b.year;
+            }
+            const monthA = a.month == null ? 0 : a.month;
+            const monthB = b.month == null ? 0 : b.month;
+            return monthA - monthB;
+        });
 
         // Populate eventYears
         eventYears.clear(); // Clear existing years
@@ -47,46 +74,59 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize currentEventIndex and currentYear based on allEvents
         if (allEvents.length > 0) {
             let targetIndex = 0;
-            if (isAppInitialized) { // If app has been initialized, try to maintain currentYear
-                const idx = allEvents.findIndex(event => event.year === currentYear);
+            if (isAppInitialized) {
+                // Try to find an event that matches the currentYear and currentMonth
+                let idx = allEvents.findIndex(event =>
+                    event.year === currentYear &&
+                    (event.month == null ? 0 : event.month) === (currentMonth == null ? 0 : currentMonth)
+                );
+
+                if (idx === -1) { // If exact year/month not found, try finding just by year
+                    idx = allEvents.findIndex(event => event.year === currentYear);
+                }
+
                 if (idx !== -1) {
                     targetIndex = idx;
                 }
+                // If still not found, targetIndex remains 0 (first event of the sorted list)
             }
             currentEventIndex = targetIndex;
             currentYear = allEvents[currentEventIndex].year;
+            currentMonth = allEvents[currentEventIndex].month; // Set currentMonth
             if (!isAppInitialized) {
                 isAppInitialized = true; // Set after first successful setup
             }
         } else {
             currentEventIndex = 0;
             currentYear = startYear; // `startYear` is 0 if no events
+            currentMonth = null;     // No events, so no month
             // isAppInitialized remains false or its current state if no events to initialize with
         }
     }
 
     // --- UI UPDATE FUNCTIONS ---
-    function updateCurrentYearDisplayDOM(yearToDisplay) {
-        if (currentTimeDisplay) {
-            currentTimeDisplay.textContent = formatYear(yearToDisplay);
+    function updateCurrentYearDisplayDOM() { // No longer takes yearToDisplay argument
+        if (!currentTimeDisplay || allEvents.length === 0) {
+            currentTimeDisplay.textContent = "Time: N/A"; // Default if no events
+            return;
         }
+        const currentEvent = allEvents[currentEventIndex];
+        currentTimeDisplay.textContent = `Time: ${formatYearMonth(currentEvent.year, currentEvent.month)}`;
     }
 
-    function updateEventDisplayDOM(yearToFilter) {
-        if (!eventDisplay) return;
-        const roundedYearToFilter = Math.round(yearToFilter);
-        const eventsForYear = allEvents.filter(event => event.year === roundedYearToFilter);
-
-        if (eventsForYear.length > 0) {
-            let htmlContent = `<h3>Events in ${formatYear(roundedYearToFilter)}:</h3><ul>`;
-            eventsForYear.forEach(event => {
-                htmlContent += `<li>${event.description}</li>`;
-            });
-            htmlContent += `</ul>`;
-            eventDisplay.innerHTML = htmlContent;
-        } else {
-            eventDisplay.innerHTML = `<p>No specific events recorded for ${formatYear(roundedYearToFilter)}.</p>`;
+    function updateEventDisplayDOM() { // No longer takes yearToFilter argument
+        if (!eventDisplay || allEvents.length === 0) {
+            eventDisplay.innerHTML = "<p>No event selected.</p>";
+            return;
         }
+
+        const currentEvent = allEvents[currentEventIndex];
+        let htmlContent = `<h3>Details for ${formatYearMonth(currentEvent.year, currentEvent.month)}:</h3>`;
+        htmlContent += `<p>${currentEvent.description}</p>`;
+        // If you want to list other events from the same year/month, add logic here.
+        // For now, focusing on the single current event.
+
+        eventDisplay.innerHTML = htmlContent;
     }
 
     function updateThumbAppearance() {
@@ -121,10 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Combined Update Function ---
     function updatePageForCurrentYear() {
-        // currentYear is now always an integer derived from an event.
-        updateCurrentYearDisplayDOM(currentYear);
-        updateEventDisplayDOM(currentYear);
-        // updateThumbAppearance(); // REMOVED from here
+        // currentYear is already set to allEvents[currentEventIndex].year
+        // currentMonth (if needed) would be allEvents[currentEventIndex].month
+        updateCurrentYearDisplayDOM(); // No longer passes currentYear
+        updateEventDisplayDOM();   // No longer passes currentYear
     }
 
     // --- SCROLLBAR INTERACTION ---
@@ -173,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         currentYear = allEvents[currentEventIndex].year;
+        currentMonth = allEvents[currentEventIndex].month; // Update currentMonth
 
         updatePageForCurrentYear();
         // updateThumbAppearance(); // updatePageForCurrentYear already calls this.
@@ -214,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         currentYear = allEvents[currentEventIndex].year;
+        currentMonth = allEvents[currentEventIndex].month; // Update currentMonth
 
         updatePageForCurrentYear();
         updateThumbAppearance();   // Explicitly call to ensure thumb updates, though updatePageForCurrentYear also calls it.
