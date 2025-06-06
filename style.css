@@ -50,6 +50,14 @@ body, html {
     flex-direction: column;
 }
 
+#map-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Scales the image down to fit, maintaining aspect ratio */
+    display: block; /* Ensures block behavior */
+    flex-grow: 1; /* Allows the image to take available space in the flex container #map */
+}
+
 #description-tab {
     width: 50%;
     height: 100%; /* To fill the content-wrapper height */
