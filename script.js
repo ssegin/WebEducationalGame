@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentYear = startYear;
     let currentMonth = null; // Added for month preservation
     let isAppInitialized = false; // Replaces isFirstLoad
+    let rafScheduled = false; // For requestAnimationFrame in mousemove
 
     // --- UTILITY: BC/AD Year Formatting ---
     function formatYear(year) { // Keep this if used elsewhere, or replace uses with formatYearMonth
@@ -213,10 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         currentYear = allEvents[currentEventIndex].year;
-        currentMonth = allEvents[currentEventIndex].month; // Update currentMonth
+        currentMonth = allEvents[currentEventIndex].month;
 
-        updatePageForCurrentYear();
-        // updateThumbAppearance(); // updatePageForCurrentYear already calls this.
+        if (!rafScheduled) {
+            rafScheduled = true;
+            requestAnimationFrame(() => {
+                updatePageForCurrentYear();
+                updateThumbAppearance();
+                rafScheduled = false; // Allow next frame to be scheduled
+            });
+        }
     });
 
     document.addEventListener('mouseup', () => {
@@ -225,9 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollbarThumb.style.backgroundColor = '#555';
             document.body.style.cursor = 'default';
             document.body.style.userSelect = '';
-            // currentYear is already updated, just ensure its final state is rendered
-            // No need to round here if we want to keep fractional precision until next discrete action
-            updatePageForCurrentYear();
+            // updatePageForCurrentYear(); // REMOVED - Mousemove handles updates during drag.
         }
     });
 
