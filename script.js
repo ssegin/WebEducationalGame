@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentYear = startYear;
     let isAppInitialized = false; // Replaces isFirstLoad
     let rafScheduled = false; // For requestAnimationFrame in mousemove
-    let activeTagFilter = null;
+    let activeTagFilters = []; // Initialize as an empty array
 
     // --- UTILITY: BC/AD Year Formatting ---
     function formatYear(year) { // Keep this if used elsewhere, or replace uses with formatYearMonth
@@ -90,10 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const previouslySelectedEvent = (currentEventIndex >= 0 && currentEventIndex < allEvents.length) ? allEvents[currentEventIndex] : null;
         const previousYear = currentYear;
 
-        if (activeTagFilter) {
-            navigableEvents = allEvents.filter(event => event.tags && event.tags.includes(activeTagFilter));
+        if (activeTagFilters.length > 0) { // Check if there are any active tags
+            navigableEvents = allEvents.filter(event =>
+                event.tags && event.tags.some(tag => activeTagFilters.includes(tag))
+            );
         } else {
-            navigableEvents = [...allEvents]; // Shallow copy
+            navigableEvents = [...allEvents]; // No filter active, use all events
         }
 
         if (navigableEvents.length === 0) {
@@ -179,21 +181,30 @@ document.addEventListener('DOMContentLoaded', () => {
             tagElement.style.border = '1px solid #ccc';
             tagElement.style.borderRadius = '3px';
 
-            if (tag === activeTagFilter) {
+            // Highlight based on inclusion in activeTagFilters array
+            if (activeTagFilters.includes(tag)) {
                 tagElement.style.backgroundColor = '#007bff'; // Highlight active filter
                 tagElement.style.color = 'white';
             }
 
             tagElement.addEventListener('click', () => {
-                activeTagFilter = tag;
-                updateNavigableEvents(); // Call this first
-                updatePageForCurrentYear(); // Then update the page
-                // clearTagFilterButton.style.display is handled by updateTagFilterDisplay via updatePageForCurrentYear
+                const clickedTag = tagElement.textContent; // Get tag from textContent
+                const index = activeTagFilters.indexOf(clickedTag);
+                if (index > -1) {
+                    // Tag is already active, remove it (deselect)
+                    activeTagFilters.splice(index, 1);
+                } else {
+                    // Tag is not active, add it
+                    activeTagFilters.push(clickedTag);
+                }
+                updateNavigableEvents();
+                updatePageForCurrentYear();
             });
             tagListContainer.appendChild(tagElement);
         });
 
-        if(activeTagFilter){
+        // Show clear button if there are any active filters
+        if(activeTagFilters.length > 0){
             clearTagFilterButton.style.display = 'inline-block';
         } else {
             clearTagFilterButton.style.display = 'none';
@@ -217,9 +228,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (navigableEvents.length === 0 || currentNavigableIndex < 0 || currentNavigableIndex >= navigableEvents.length) {
             let message = "<p>No events available.</p>";
-            if (activeTagFilter) {
+            if (activeTagFilters.length > 0) {
                 // If navigableEvents is empty AND a filter is active, it means no events matched the filter.
-                message = `<p>No events found for tag: "${activeTagFilter}".</p>`;
+                message = `<p>No events found for tags: "${activeTagFilters.join(', ')}".</p>`;
             } else if (allEvents.length === 0) {
                 // If navigableEvents is empty and no filter, but allEvents is also empty.
                 message = "<p>No events have been added yet.</p>";
@@ -237,31 +248,38 @@ document.addEventListener('DOMContentLoaded', () => {
         // The current logic for finalFilteredEvents already does this.
         let yearFilteredEvents = allEvents.filter(event => event.year === targetYear);
 
-        let finalFilteredEvents = yearFilteredEvents;
-        if (activeTagFilter) {
-            finalFilteredEvents = yearFilteredEvents.filter(event => {
-                return event.tags && event.tags.includes(activeTagFilter);
-            });
+        let finalFilteredEvents = yearFilteredEvents; // Start with year-filtered events
+
+        if (activeTagFilters.length > 0) { // Apply OR logic for multiple tags
+            finalFilteredEvents = yearFilteredEvents.filter(event =>
+                event.tags && event.tags.some(tag => activeTagFilters.includes(tag))
+            );
         }
+        // Note: If activeTagFilters is empty, finalFilteredEvents remains yearFilteredEvents (no tag filtering).
+
+        // Header construction using activeTagFilters (plural) for display
+        let htmlContent = `<h3>Events in ${formatYearMonth(targetYear)}`;
+        if (activeTagFilters.length > 0) {
+            htmlContent += ` (Tags: ${activeTagFilters.join(', ')})`;
+        }
+        htmlContent += `:</h3>`;
 
         if (finalFilteredEvents.length === 0) {
-            let message = ``;
-            if (activeTagFilter) {
-                message = `<p>No events found for ${formatYearMonth(targetYear)} with tag "${activeTagFilter}".</p>`;
+            let messageDetail = "No events found for this year";
+            if (activeTagFilters.length > 0) { // Use plural for message
+                messageDetail += ` with tags: "${activeTagFilters.join(', ')}"`;
+            }
+            messageDetail += ".";
+
+            if (activeTagFilters.length === 0 && navigableEvents.length > 0 && currentNavigableIndex >= 0 && currentNavigableIndex < navigableEvents.length) {
+                 messageDetail = `<p>No events found for this year (unexpected, as selected event implies one exists).</p>`
             } else {
-                // This case implies no events for the year at all, which should ideally not happen if selectedEvent is valid.
-                // However, if allEvents was empty to begin with, this path might be taken.
-                message = `<p>No events found for ${formatYearMonth(targetYear)}.</p>`;
+                 messageDetail = `<p>${messageDetail}</p>`;
             }
-            // Construct header for context even if no events for the specific filter in this year
-            let header = `<h3>Events in ${formatYearMonth(targetYear)}`;
-            if (activeTagFilter) {
-                header += ` (Tag: ${activeTagFilter})`;
-            }
-            header += `:</h3>`;
-            eventDisplay.innerHTML = header + message;
+            eventDisplay.innerHTML = htmlContent + messageDetail;
+            return; // Return after setting message
         } else {
-            let htmlContent = `<h3>Events in ${formatYearMonth(targetYear)}${activeTagFilter ? ` (Tag: ${activeTagFilter})` : ''}:</h3>`;
+            // htmlContent is already correctly built with plural tags for the header
             htmlContent += "<ul>";
 
             finalFilteredEvents.forEach(event => {
@@ -450,10 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearTagFilterButton = document.getElementById('clear-tag-filter');
     if (clearTagFilterButton) {
         clearTagFilterButton.addEventListener('click', () => {
-            activeTagFilter = null;
+            activeTagFilters = []; // Clear the array of active tags
             updateNavigableEvents(); // Call this first
             updatePageForCurrentYear(); // Then update the page
-            // clearTagFilterButton.style.display is handled by updateTagFilterDisplay via updatePageForCurrentYear
         });
     }
 
