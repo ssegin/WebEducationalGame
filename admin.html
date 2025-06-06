@@ -49,7 +49,7 @@
         <h1>Timeline Event Management</h1>
 
         <section id="add-event-form">
-            <h2>Add New Event</h2>
+            <h2 id="eventFormHeading">Add New Event</h2>
             <form id="eventForm">
                 <div>
                     <label for="eventYear">Year (AD):</label>
@@ -63,7 +63,8 @@
                     <label for="eventTags">Tags (comma-separated):</label>
                     <input type="text" id="eventTags" name="eventTags" placeholder="e.g., politics, war, science">
                 </div>
-                <button type="submit">Save Event</button>
+                <button type="submit" id="saveEventButton">Save Event</button>
+                <button type="button" id="cancelEditButton" style="display:none; background-color: #6c757d; margin-left: 10px;">Cancel Edit</button>
             </form>
         </section>
 
