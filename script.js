@@ -8,10 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allEvents = [];
     let eventYears = new Set(); // Declare eventYears globally within DOMContentLoaded
+    let currentEventIndex = 0; // Added global variable
     let startYear = -10;
     let endYear = 10;
     let currentYear = startYear;
-    let isFirstLoad = true;
+    let isAppInitialized = false; // Replaces isFirstLoad
 
     // --- UTILITY: BC/AD Year Formatting ---
     function formatYear(year) {
@@ -33,34 +34,34 @@ document.addEventListener('DOMContentLoaded', () => {
         allEvents.forEach(event => eventYears.add(event.year));
 
         if (allEvents.length > 0) {
-            let minYear = allEvents[0].year;
-            let maxYear = allEvents[allEvents.length - 1].year;
+            startYear = allEvents[0].year; // Min year from sorted events
+            endYear = allEvents[allEvents.length - 1].year; // Max year from sorted events
 
-            const yearSpan = maxYear - minYear;
-            const padding = Math.max(10, Math.floor(yearSpan * 0.1));
-
-            startYear = minYear - padding;
-            endYear = maxYear + padding;
-
-            if (endYear - startYear < 20) {
-                const mid = Math.round((startYear + endYear) / 2);
-                startYear = mid - 10;
-                endYear = mid + 10;
-            }
-            if (startYear === endYear) { // Ensure not identical
-                endYear += 10;
-            }
+            // If all events are in the same year, startYear will equal endYear. This is fine.
         } else {
-            startYear = -10;
-            endYear = 10;
+            // Defaults if no events.
+            startYear = 0;
+            endYear = 0;
         }
 
-        if (isFirstLoad) {
-            currentYear = startYear;
-            isFirstLoad = false;
+        // Initialize currentEventIndex and currentYear based on allEvents
+        if (allEvents.length > 0) {
+            let targetIndex = 0;
+            if (isAppInitialized) { // If app has been initialized, try to maintain currentYear
+                const idx = allEvents.findIndex(event => event.year === currentYear);
+                if (idx !== -1) {
+                    targetIndex = idx;
+                }
+            }
+            currentEventIndex = targetIndex;
+            currentYear = allEvents[currentEventIndex].year;
+            if (!isAppInitialized) {
+                isAppInitialized = true; // Set after first successful setup
+            }
         } else {
-            // Clamp currentYear to the new range if it's outside
-            currentYear = Math.max(startYear, Math.min(endYear, currentYear));
+            currentEventIndex = 0;
+            currentYear = startYear; // `startYear` is 0 if no events
+            // isAppInitialized remains false or its current state if no events to initialize with
         }
     }
 
@@ -89,44 +90,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateThumbAppearance() {
-        const totalYearSpan = endYear - startYear;
-        if (totalYearSpan <= 0) {
-             scrollbarThumb.style.width = '3%'; // Default small width
-             scrollbarThumb.style.left = '0%';
+        const scrollbarContainerWidth = scrollbarContainer.offsetWidth;
+        const thumbWidthPercentage = 3; // Or a more dynamic calculation if needed
+        let thumbActualWidth = (thumbWidthPercentage / 100) * scrollbarContainerWidth;
+
+        if (allEvents.length === 0) {
+            scrollbarThumb.style.width = '0px'; // Or minimal width, effectively hidden
+            scrollbarThumb.style.left = '0%';
             return;
         }
 
-        // Ensure currentYear is within bounds for percentage calculation
-        const boundedCurrentYear = Math.max(startYear, Math.min(currentYear, endYear));
-        const yearPercentageOffset = (boundedCurrentYear - startYear) / totalYearSpan;
+        // Ensure thumb width doesn't exceed container if only one event
+        if (allEvents.length <= 1) {
+             // Fixed small width for single/no events to avoid full bar.
+            scrollbarThumb.style.width = `${thumbWidthPercentage}%`;
+            scrollbarThumb.style.left = '0%';
+        } else {
+            scrollbarThumb.style.width = `${thumbWidthPercentage}%`;
+            // Calculate position based on currentEventIndex
+            // The effective track width for the thumb's left edge to move along
+            const trackWidth = scrollbarContainerWidth - thumbActualWidth;
+            let positionPercentage = 0;
+            if (allEvents.length > 1) { // Avoid division by zero if only one event
+                positionPercentage = currentEventIndex / (allEvents.length - 1);
+            }
 
-        const thumbWidthPercentage = 3;
-        scrollbarThumb.style.width = `${thumbWidthPercentage}%`;
-
-        const maxThumbLeftPercentage = 100 - thumbWidthPercentage;
-        const thumbPositionPercentage = yearPercentageOffset * maxThumbLeftPercentage;
-
-        scrollbarThumb.style.left = `${Math.max(0, Math.min(thumbPositionPercentage, maxThumbLeftPercentage))}%`;
+            scrollbarThumb.style.left = `${positionPercentage * (100 - thumbWidthPercentage)}%`;
+        }
     }
 
     // --- Combined Update Function ---
     function updatePageForCurrentYear() {
-        // currentYear can be fractional during drag, round for display logic
-        const displayYear = Math.round(currentYear);
-        updateCurrentYearDisplayDOM(displayYear);
-        updateEventDisplayDOM(displayYear);
-        updateThumbAppearance(); // Thumb appearance uses the potentially fractional currentYear
+        // currentYear is now always an integer derived from an event.
+        updateCurrentYearDisplayDOM(currentYear);
+        updateEventDisplayDOM(currentYear);
+        // updateThumbAppearance(); // REMOVED from here
     }
 
     // --- SCROLLBAR INTERACTION ---
     let isDragging = false;
-    let dragStartYearValue;
+    let dragStartEventIndex; // Renamed from dragStartYearValue
     let dragMouseStartX;
 
     scrollbarThumb.addEventListener('mousedown', (e) => {
         e.preventDefault();
         isDragging = true;
-        dragStartYearValue = currentYear; // Store the precise fractional year
+        dragStartEventIndex = currentEventIndex; // Store the starting event index
         dragMouseStartX = e.clientX;
         scrollbarThumb.style.backgroundColor = '#333';
         document.body.style.cursor = 'grabbing';
@@ -137,35 +146,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isDragging) return;
         e.preventDefault();
 
-        const totalYearSpan = endYear - startYear;
-        if (totalYearSpan <= 0) return;
-
-        const rect = scrollbarContainer.getBoundingClientRect();
-        const scrollbarWidth = rect.width;
-        if (scrollbarWidth === 0) return; // Avoid division by zero
-
-        const mouseDeltaX = e.clientX - dragMouseStartX;
-        const yearDelta = (mouseDeltaX / scrollbarWidth) * totalYearSpan;
-        let rawYearFromMouse = dragStartYearValue + yearDelta;
-
-        if (eventYears.size > 0) {
-            const sortedEventYears = Array.from(eventYears).sort((a, b) => a - b);
-
-            // Find the closest event year
-            currentYear = sortedEventYears.reduce((prev, curr) => {
-                return (Math.abs(curr - rawYearFromMouse) < Math.abs(prev - rawYearFromMouse) ? curr : prev);
-            });
-
-            // Ensure currentYear is not outside the overall start/end range,
-            // although snapping to an event year should generally keep it within a valid sub-range.
-            currentYear = Math.max(startYear, Math.min(endYear, currentYear));
-
-        } else {
-            // If no event years, behave as before (allow dragging freely within start/end range)
-            currentYear = Math.max(startYear, Math.min(endYear, rawYearFromMouse));
+        if (allEvents.length === 0) { // No events, nothing to drag to
+            return;
         }
 
+        const rect = scrollbarContainer.getBoundingClientRect();
+        const scrollbarActualWidth = rect.width; // Total width of the scrollbar container
+
+        const thumbWidthPercentage = 3; // Keep consistent with updateThumbAppearance
+        const thumbActualWidth = (thumbWidthPercentage / 100) * scrollbarActualWidth;
+        const draggableTrackWidth = scrollbarActualWidth - thumbActualWidth;
+
+        let positionPercentage = 0;
+        if (draggableTrackWidth > 0) {
+            let mouseXOnTrack = e.clientX - rect.left - (thumbActualWidth / 2);
+            positionPercentage = Math.max(0, Math.min(1, mouseXOnTrack / draggableTrackWidth));
+        } else if (allEvents.length > 1) {
+            positionPercentage = (e.clientX - rect.left < scrollbarActualWidth / 2) ? 0 : 1;
+        }
+
+        if (allEvents.length > 1) {
+            let newIndex = Math.round(positionPercentage * (allEvents.length - 1));
+            currentEventIndex = Math.max(0, Math.min(allEvents.length - 1, newIndex));
+        } else {
+            currentEventIndex = 0;
+        }
+
+        currentYear = allEvents[currentEventIndex].year;
+
         updatePageForCurrentYear();
+        // updateThumbAppearance(); // updatePageForCurrentYear already calls this.
     });
 
     document.addEventListener('mouseup', () => {
@@ -181,32 +191,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     scrollbarContainer.addEventListener('click', (e) => {
-        if (e.target === scrollbarThumb || scrollbarThumb.contains(e.target)) return;
+        if (e.target === scrollbarThumb || scrollbarThumb.contains(e.target)) {
+            return;
+        }
+
+        if (allEvents.length === 0) { // No events, nothing to click to
+            return;
+        }
 
         const rect = scrollbarContainer.getBoundingClientRect();
         const scrollbarWidth = rect.width;
         if (scrollbarWidth === 0) return;
 
         let clickX = e.clientX - rect.left;
-        let positionPercentage = (clickX / scrollbarWidth);
-        positionPercentage = Math.max(0, Math.min(positionPercentage, 1));
+        let positionPercentage = Math.max(0, Math.min(1, clickX / scrollbarWidth));
 
-        let rawClickedYear = startYear + (positionPercentage * (endYear - startYear));
-
-        if (eventYears.size > 0) {
-            const sortedEventYears = Array.from(eventYears).sort((a, b) => a - b);
-
-            currentYear = sortedEventYears.reduce((prev, curr) => {
-                return (Math.abs(curr - rawClickedYear) < Math.abs(prev - rawClickedYear) ? curr : prev);
-            });
+        if (allEvents.length > 1) {
+            let newIndex = Math.round(positionPercentage * (allEvents.length - 1));
+            currentEventIndex = Math.max(0, Math.min(allEvents.length - 1, newIndex));
         } else {
-            currentYear = rawClickedYear;
+            currentEventIndex = 0;
         }
 
-        // Ensure currentYear is within the overall start/end range.
-        currentYear = Math.max(startYear, Math.min(endYear, currentYear));
+        currentYear = allEvents[currentEventIndex].year;
 
         updatePageForCurrentYear();
+        updateThumbAppearance();   // Explicitly call to ensure thumb updates, though updatePageForCurrentYear also calls it.
     });
 
     // --- WINDOW RESIZE & STORAGE LISTENER ---
@@ -216,19 +226,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('storage', (e) => {
         if (e.key === eventStorageKey) {
-            const previousCurrentYear = currentYear;
-            isFirstLoad = true; // This will force currentYear to be startYear after load if it's out of new range
+            // const previousCurrentYear = currentYear; // currentYear is already preserved by loadEventsAndSetRange if possible
+            // isAppInitialized should correctly handle re-initialization logic within loadEventsAndSetRange
             loadEventsAndSetRange();
-
-            if (previousCurrentYear >= startYear && previousCurrentYear <= endYear) {
-                currentYear = previousCurrentYear;
-                isFirstLoad = false; // Undo the reset if previous year is still valid
-            }
             updatePageForCurrentYear();
+            updateThumbAppearance(); // Explicitly update thumb after storage event
         }
     });
 
     // --- INITIALIZATION ---
     loadEventsAndSetRange();
     updatePageForCurrentYear();
+    updateThumbAppearance(); // Explicitly call after initial load
 });
