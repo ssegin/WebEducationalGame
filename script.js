@@ -31,23 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
             let minYear = allEvents[0].year;
             let maxYear = allEvents[allEvents.length - 1].year;
 
-            const yearSpan = maxYear - minYear;
-            const padding = Math.max(10, Math.floor(yearSpan * 0.1));
+            startYear = minYear;
+            endYear = maxYear;
 
-            startYear = minYear - padding;
-            endYear = maxYear + padding;
-
-            if (endYear - startYear < 20) {
-                const mid = Math.round((startYear + endYear) / 2);
-                startYear = mid - 10;
-                endYear = mid + 10;
-            }
             if (startYear === endYear) { // Ensure not identical
                 endYear += 10;
             }
         } else {
-            startYear = -10;
-            endYear = 10;
+            //startYear = -10;
+            //endYear = 10;
         }
 
         if (isFirstLoad) {
@@ -86,8 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateThumbAppearance() {
         const totalYearSpan = endYear - startYear;
         if (totalYearSpan <= 0) {
-             scrollbarThumb.style.width = '3%'; // Default small width
-             scrollbarThumb.style.left = '0%';
+            scrollbarThumb.style.width = '3%'; // Default small width
+            scrollbarThumb.style.left = '0%';
             return;
         }
 
