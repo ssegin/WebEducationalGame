@@ -40,16 +40,19 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const yearInput = document.getElementById('eventYear');
             const descriptionInput = document.getElementById('eventDescription');
+            const tagsInput = document.getElementById('eventTags');
 
             const year = parseInt(yearInput.value);
             const description = descriptionInput.value.trim();
+            const tagsString = tagsInput.value.trim();
+            const tags = tagsString === '' ? [] : tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
 
             if (isNaN(year) || description === '') {
                 alert('Please enter a valid year and description.');
                 return;
             }
 
-            const newEvent = { year, description };
+            const newEvent = { year, description, tags };
             const events = getEventsFromStorage();
             events.push(newEvent);
             events.sort((a, b) => a.year - b.year);

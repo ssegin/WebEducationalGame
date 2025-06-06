@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentYear = startYear;
     let isAppInitialized = false; // Replaces isFirstLoad
     let rafScheduled = false; // For requestAnimationFrame in mousemove
+    let activeTagFilter = null;
 
     // --- UTILITY: BC/AD Year Formatting ---
     function formatYear(year) { // Keep this if used elsewhere, or replace uses with formatYearMonth
@@ -83,6 +84,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- UI UPDATE FUNCTIONS ---
+    function updateTagFilterDisplay() {
+        const tagListContainer = document.getElementById('tag-list');
+        const clearTagFilterButton = document.getElementById('clear-tag-filter');
+        const tagFilterContainer = document.getElementById('tag-filter-container');
+
+        if (!tagListContainer || !clearTagFilterButton || !tagFilterContainer) return;
+
+        let uniqueTags = new Set();
+        allEvents.forEach(event => {
+            if (event.tags && Array.isArray(event.tags)) {
+                event.tags.forEach(tag => uniqueTags.add(tag));
+            }
+        });
+
+        tagListContainer.innerHTML = ''; // Clear previous tags
+        if (uniqueTags.size === 0) {
+            tagFilterContainer.style.display = 'none'; // Hide container if no tags
+            clearTagFilterButton.style.display = 'none'; // Ensure clear button is also hidden
+            // activeTagFilter = null; // Reset filter if no tags are available - NO, keep active filter
+            return;
+        }
+        tagFilterContainer.style.display = 'block'; // Show container if tags exist
+
+
+        uniqueTags.forEach(tag => {
+            const tagElement = document.createElement('span'); // Or 'button'
+            tagElement.classList.add('tag-filter-item'); // Add a class for styling
+            tagElement.textContent = tag;
+            tagElement.style.cursor = 'pointer';
+            tagElement.style.marginRight = '5px'; // Basic styling
+            tagElement.style.marginBottom = '5px'; // Basic styling for wrapping
+            tagElement.style.display = 'inline-block'; // Ensure proper spacing and wrapping
+            tagElement.style.padding = '2px 5px';
+            tagElement.style.border = '1px solid #ccc';
+            tagElement.style.borderRadius = '3px';
+
+            if (tag === activeTagFilter) {
+                tagElement.style.backgroundColor = '#007bff'; // Highlight active filter
+                tagElement.style.color = 'white';
+            }
+
+            tagElement.addEventListener('click', () => {
+                activeTagFilter = tag;
+                updatePageForCurrentYear(); // This will re-render events and tags
+                // clearTagFilterButton.style.display = 'inline-block'; // Handled below
+            });
+            tagListContainer.appendChild(tagElement);
+        });
+
+        if(activeTagFilter){
+            clearTagFilterButton.style.display = 'inline-block';
+        } else {
+            clearTagFilterButton.style.display = 'none';
+        }
+    }
+
+
     function updateCurrentYearDisplayDOM() { // No longer takes yearToDisplay argument
         if (!currentTimeDisplay || allEvents.length === 0) {
             currentTimeDisplay.textContent = "Time: N/A"; // Default if no events
@@ -101,29 +159,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedEvent = allEvents[currentEventIndex];
         const targetYear = selectedEvent.year;
 
-        const periodEventsFiltered = allEvents.filter(event => event.year === targetYear);
+        const yearFilteredEvents = allEvents.filter(event => event.year === targetYear);
 
-        if (periodEventsFiltered.length === 0) {
-            eventDisplay.innerHTML = "<p>No events found for this period (unexpected).</p>";
-            return;
+        let finalFilteredEvents = yearFilteredEvents;
+        if (activeTagFilter) {
+            finalFilteredEvents = yearFilteredEvents.filter(event => {
+                return event.tags && event.tags.includes(activeTagFilter);
+            });
         }
 
-        let htmlContent = `<h3>Events in ${formatYearMonth(targetYear)}:</h3>`;
-        htmlContent += "<ul>";
-
-        periodEventsFiltered.forEach(event => {
-            let eventDateStr = formatYearMonth(event.year);
-            htmlContent += `<li>`;
-            htmlContent += `<strong>${eventDateStr}:</strong> ${event.description}`;
-
-            if (event.tags && Array.isArray(event.tags) && event.tags.length > 0) {
-                htmlContent += `<br><small><em>Tags: ${event.tags.join(', ')}</em></small>`;
+        if (finalFilteredEvents.length === 0) {
+            if (activeTagFilter) {
+                eventDisplay.innerHTML = `<p>No events found for ${formatYearMonth(targetYear)} with tag "${activeTagFilter}".</p>`;
+            } else {
+                // This case implies no events for the year at all, or after other filters if they existed.
+                eventDisplay.innerHTML = `<p>No events found for ${formatYearMonth(targetYear)}.</p>`;
             }
-            htmlContent += `</li>`;
-        });
+        } else {
+            let htmlContent = `<h3>Events in ${formatYearMonth(targetYear)}${activeTagFilter ? ` (Tag: ${activeTagFilter})` : ''}:</h3>`;
+            htmlContent += "<ul>";
 
-        htmlContent += "</ul>";
-        eventDisplay.innerHTML = htmlContent;
+            finalFilteredEvents.forEach(event => {
+                let eventDateStr = formatYearMonth(event.year);
+                htmlContent += `<li>`;
+                htmlContent += `<strong>${eventDateStr}:</strong> ${event.description}`;
+
+                if (event.tags && Array.isArray(event.tags) && event.tags.length > 0) {
+                    htmlContent += `<br><small><em>Tags: ${event.tags.join(', ')}</em></small>`;
+                }
+                htmlContent += `</li>`;
+            });
+
+            htmlContent += "</ul>";
+            eventDisplay.innerHTML = htmlContent;
+        }
     }
 
     function updateThumbAppearance() {
@@ -162,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // currentMonth (if needed) would be allEvents[currentEventIndex].month
         updateCurrentYearDisplayDOM(); // No longer passes currentYear
         updateEventDisplayDOM();   // No longer passes currentYear
+        updateTagFilterDisplay(); // Add this call
     }
 
     // --- SCROLLBAR INTERACTION ---
@@ -276,7 +346,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- INITIALIZATION ---
+    const clearTagFilterButton = document.getElementById('clear-tag-filter');
+    if (clearTagFilterButton) {
+        clearTagFilterButton.addEventListener('click', () => {
+            activeTagFilter = null;
+            updatePageForCurrentYear();
+            // clearTagFilterButton.style.display = 'none'; // updateTagFilterDisplay will handle this
+        });
+    }
+
     loadEventsAndSetRange();
-    updatePageForCurrentYear();
+    updatePageForCurrentYear(); // This will call updateTagFilterDisplay internally
     updateThumbAppearance(); // Explicitly call after initial load
 });
