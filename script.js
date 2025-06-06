@@ -121,12 +121,39 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const currentEvent = allEvents[currentEventIndex];
-        let htmlContent = `<h3>Details for ${formatYearMonth(currentEvent.year, currentEvent.month)}:</h3>`;
-        htmlContent += `<p>${currentEvent.description}</p>`;
-        // If you want to list other events from the same year/month, add logic here.
-        // For now, focusing on the single current event.
+        const selectedEvent = allEvents[currentEventIndex];
+        const targetYear = selectedEvent.year;
+        const targetMonth = selectedEvent.month; // Will be null/undefined if not set
 
+        const periodEventsFiltered = allEvents.filter(event => {
+            if (event.year !== targetYear) return false;
+            if (targetMonth != null) { // Selected event has a specific month
+                return event.month === targetMonth;
+            } else { // Selected event is a year-level event (no month)
+                return true; // Show all events for that year
+            }
+        });
+
+        if (periodEventsFiltered.length === 0) {
+            eventDisplay.innerHTML = "<p>No events found for this period (unexpected).</p>";
+            return;
+        }
+
+        let htmlContent = `<h3>Events in ${formatYearMonth(targetYear, targetMonth)}:</h3>`;
+        htmlContent += "<ul>";
+
+        periodEventsFiltered.forEach(event => {
+            let eventDateStr = formatYearMonth(event.year, event.month);
+            htmlContent += `<li>`;
+            htmlContent += `<strong>${eventDateStr}:</strong> ${event.description}`;
+
+            if (event.tags && Array.isArray(event.tags) && event.tags.length > 0) {
+                htmlContent += `<br><small><em>Tags: ${event.tags.join(', ')}</em></small>`;
+            }
+            htmlContent += `</li>`;
+        });
+
+        htmlContent += "</ul>";
         eventDisplay.innerHTML = htmlContent;
     }
 
