@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const eventStorageKey = 'timelineEvents';
 
     let allEvents = [];
+    let eventYears = new Set(); // Declare eventYears globally within DOMContentLoaded
     let startYear = -10;
     let endYear = 10;
     let currentYear = startYear;
@@ -27,19 +28,31 @@ document.addEventListener('DOMContentLoaded', () => {
         allEvents = eventsJson ? JSON.parse(eventsJson) : [];
         allEvents.sort((a, b) => a.year - b.year);
 
+        // Populate eventYears
+        eventYears.clear(); // Clear existing years
+        allEvents.forEach(event => eventYears.add(event.year));
+
         if (allEvents.length > 0) {
             let minYear = allEvents[0].year;
             let maxYear = allEvents[allEvents.length - 1].year;
 
-            startYear = minYear;
-            endYear = maxYear;
+            const yearSpan = maxYear - minYear;
+            const padding = Math.max(10, Math.floor(yearSpan * 0.1));
 
+            startYear = minYear - padding;
+            endYear = maxYear + padding;
+
+            if (endYear - startYear < 20) {
+                const mid = Math.round((startYear + endYear) / 2);
+                startYear = mid - 10;
+                endYear = mid + 10;
+            }
             if (startYear === endYear) { // Ensure not identical
                 endYear += 10;
             }
         } else {
-            //startYear = -10;
-            //endYear = 10;
+            startYear = -10;
+            endYear = 10;
         }
 
         if (isFirstLoad) {
@@ -78,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateThumbAppearance() {
         const totalYearSpan = endYear - startYear;
         if (totalYearSpan <= 0) {
-            scrollbarThumb.style.width = '3%'; // Default small width
-            scrollbarThumb.style.left = '0%';
+             scrollbarThumb.style.width = '3%'; // Default small width
+             scrollbarThumb.style.left = '0%';
             return;
         }
 
@@ -133,9 +146,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mouseDeltaX = e.clientX - dragMouseStartX;
         const yearDelta = (mouseDeltaX / scrollbarWidth) * totalYearSpan;
-        let newYear = dragStartYearValue + yearDelta;
+        let rawYearFromMouse = dragStartYearValue + yearDelta;
 
-        currentYear = Math.max(startYear, Math.min(endYear, newYear));
+        if (eventYears.size > 0) {
+            const sortedEventYears = Array.from(eventYears).sort((a, b) => a - b);
+
+            // Find the closest event year
+            currentYear = sortedEventYears.reduce((prev, curr) => {
+                return (Math.abs(curr - rawYearFromMouse) < Math.abs(prev - rawYearFromMouse) ? curr : prev);
+            });
+
+            // Ensure currentYear is not outside the overall start/end range,
+            // although snapping to an event year should generally keep it within a valid sub-range.
+            currentYear = Math.max(startYear, Math.min(endYear, currentYear));
+
+        } else {
+            // If no event years, behave as before (allow dragging freely within start/end range)
+            currentYear = Math.max(startYear, Math.min(endYear, rawYearFromMouse));
+        }
+
         updatePageForCurrentYear();
     });
 
@@ -162,9 +191,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let positionPercentage = (clickX / scrollbarWidth);
         positionPercentage = Math.max(0, Math.min(positionPercentage, 1));
 
-        currentYear = startYear + (positionPercentage * (endYear - startYear));
-        // Round after click for a discrete jump, or keep fractional if preferred
-        // currentYear = Math.round(currentYear);
+        let rawClickedYear = startYear + (positionPercentage * (endYear - startYear));
+
+        if (eventYears.size > 0) {
+            const sortedEventYears = Array.from(eventYears).sort((a, b) => a - b);
+
+            currentYear = sortedEventYears.reduce((prev, curr) => {
+                return (Math.abs(curr - rawClickedYear) < Math.abs(prev - rawClickedYear) ? curr : prev);
+            });
+        } else {
+            currentYear = rawClickedYear;
+        }
+
+        // Ensure currentYear is within the overall start/end range.
+        currentYear = Math.max(startYear, Math.min(endYear, currentYear));
+
         updatePageForCurrentYear();
     });
 
