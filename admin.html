@@ -5,43 +5,149 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Add Timeline Events</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #333; }
-        label { display: block; margin-top: 10px; }
+        body { 
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2d3748; 
+        }
+        .container { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(20px);
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1, h2 { 
+            color: #2d3748; 
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+        }
+        h2 {
+            font-size: 1.4em;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        label { 
+            display: block; 
+            margin-top: 15px; 
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
         input[type="number"], input[type="text"], textarea {
-            width: calc(100% - 22px);
-            padding: 10px;
+            width: 100%;
+            padding: 12px 15px;
             margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             box-sizing: border-box;
-        }
-        textarea { min-height: 80px; }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 15px;
             font-size: 1em;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
         }
-        button:hover { background-color: #0056b3; }
-        .event-list { list-style: none; padding: 0; }
+        input[type="number"]:focus, input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        textarea { 
+            min-height: 100px; 
+            resize: vertical;
+            font-family: inherit;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .event-list { 
+            list-style: none; 
+            padding: 0; 
+            margin-top: 20px;
+        }
         .event-list li {
-            background-color: #e9ecef;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 4px;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            padding: 20px;
+            margin-top: 15px;
+            border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.2s ease;
         }
-        .event-list .delete-btn { background-color: #dc3545; font-size: 0.8em; padding: 5px 10px; }
-        .event-list .delete-btn:hover { background-color: #c82333; }
-        .nav-link { display: block; margin-top: 20px; text-align: center; }
+        .event-list li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        }
+        .event-list .delete-btn { 
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            font-size: 0.85em; 
+            padding: 8px 16px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(245, 101, 101, 0.3);
+            transition: all 0.2s ease;
+        }
+        .event-list .delete-btn:hover { 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+        }
+        .nav-link { 
+            display: inline-block; 
+            margin-top: 30px; 
+            text-align: center; 
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 85, 104, 0.3);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 85, 104, 0.4);
+            text-decoration: none;
+        }
+        section {
+            margin-bottom: 2rem;
+            padding: 20px;
+            background: rgba(248, 250, 252, 0.5);
+            border-radius: 10px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
     </style>
 </head>
 <body>
