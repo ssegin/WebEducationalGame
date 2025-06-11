@@ -7,10 +7,7 @@ body, html {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* Add smooth scrolling */
-* {
-    scroll-behavior: smooth;
-}
+
 
 /* Custom scrollbar for webkit browsers */
 ::-webkit-scrollbar {
@@ -50,9 +47,7 @@ body, html {
     padding: 8px 16px;
     border-radius: 8px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .admin-nav a:hover {
@@ -66,10 +61,12 @@ body, html {
     height: calc(100vh - 20px - 50px);
     overflow-x: hidden;
     overflow-y: auto; /* Allow #map to scroll vertically if its content overflows */
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
     margin: 20px;
     border-radius: 15px;
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(5px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -86,6 +83,8 @@ body, html {
     width: 50%;
     height: 100%; /* To fill the content-wrapper height */
     overflow-y: auto; /* To allow map content to scroll if it's taller than the container */
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     padding: 25px;
     box-sizing: border-box;
@@ -143,6 +142,8 @@ body, html {
     box-sizing: border-box;
     background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
     overflow-y: auto; /* To allow its content to scroll */
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
     display: flex; /* To manage children like current-time-display and event-display */
     flex-direction: column; /* Stack children vertically */
     position: relative;
@@ -175,7 +176,7 @@ body, html {
     letter-spacing: 0.5px;
     position: relative;
     z-index: 1;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 #current-time-display:hover {
@@ -192,6 +193,8 @@ body, html {
     margin-top: 20px;
     flex-grow: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
     display: flex;
     flex-direction: column;
     border-radius: 12px;
@@ -199,7 +202,7 @@ body, html {
     border: 1px solid rgba(226, 232, 240, 0.8);
     position: relative;
     z-index: 1;
-    transition: all 0.3s ease;
+    transition: box-shadow 0.2s ease;
 }
 
 #event-display:hover {
@@ -219,7 +222,7 @@ body, html {
     border-radius: 8px;
     border-left: 4px solid #667eea;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 #event-display li:hover {
@@ -256,7 +259,7 @@ body, html {
     border-radius: 10px;
     position: absolute;
     left: 0;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, background 0.2s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.8);
     box-sizing: border-box;
